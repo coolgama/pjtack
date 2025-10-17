@@ -3,65 +3,943 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My GitHub Pages Project</title>
-    <!-- Load Tailwind CSS from CDN for easy styling -->
+    <title>AI 90-Day Fitness Tracker</title>
+    <!-- Load Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* Custom font import for aesthetics */
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #f3f4f6; /* Light gray background */
+            background-color: #f4f7f6;
+        }
+        .progress-bar-bg {
+            background-color: #d1fae5; /* Light Green */
+        }
+        .text-accent {
+            color: #059669; /* Energetic Green */
+        }
+        .bg-accent {
+            background-color: #059669;
+        }
+        .shimmer {
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 200% 100%;
+            animation: shimmering 1.5s infinite;
+        }
+        @keyframes shimmering {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+        /* Custom border for the edit link */
+        .plan-editor-trigger {
+            border: 2px dashed #059669; /* Green dashed border */
+            transform: scale(1);
+            transition: all 0.2s ease-in-out;
+        }
+        .plan-editor-trigger:hover {
+            transform: scale(1.02);
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05);
         }
     </style>
 </head>
-<body class="min-h-screen flex items-center justify-center p-4">
+<body>
 
-    <!-- Main Content Card -->
-    <div class="bg-white p-8 md:p-10 rounded-xl shadow-2xl max-w-lg w-full transform transition duration-500 hover:scale-[1.02] border border-gray-100">
+<div id="app" class="min-h-screen p-4 md:p-8">
+    <!-- Header -->
+    <header class="text-center mb-8">
+        <h1 class="text-3xl md:text-4xl font-extrabold text-gray-800">90-Day <span class="text-accent">AI Fitness Tracker</span></h1>
+        <p class="text-sm text-gray-500 mt-1">Single Link Access | Real-Time Sync | Personalized Coaching</p>
+        <p id="auth-status" class="text-xs text-gray-600 mt-2"></p>
+    </header>
 
-        <!-- Header Section -->
-        <header class="text-center mb-8">
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-12 h-12 text-indigo-600 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 4.016A11.955 11.955 0 0012 22.056 11.955 11.955 0 0020.618 7.984z" />
-            </svg>
-            <h1 class="text-3xl font-bold text-gray-800 mb-2">Project Deployment Successful!</h1>
-            <p class="text-gray-500">This code is ready for GitHub Pages hosting.</p>
-        </header>
+    <!-- Dashboard & Input Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
+        <!-- COLUMN 1: Dashboard & Suggestions -->
+        <div class="lg:col-span-1 space-y-6">
+            
+            <!-- Tomorrow's Focus Card (Clickable to Edit - THE DIRECT LINK ACTION) -->
+            <div onclick="togglePlanEditor()" class="bg-white p-6 rounded-xl shadow-lg plan-editor-trigger cursor-pointer hover:shadow-xl transition duration-300">
+                <h2 class="text-xl font-bold mb-3 text-gray-700 flex items-center justify-between">
+                    Tomorrow's Focus <span id="tomorrow-date" class="text-sm font-normal text-gray-400"></span>
+                    <span class="text-xs font-bold text-accent">CLICK TO EDIT PLAN</span>
+                </h2>
+                <p id="tomorrow-tasks" class="text-gray-600 text-sm italic min-h-12 flex items-center">Loading plan from cloud configuration...</p>
+            </div>
 
-        <!-- Instructions Section -->
-        <section class="mb-8">
-            <h2 class="text-xl font-semibold text-gray-700 mb-4 border-b pb-2">Your Next Steps</h2>
-            <ol class="space-y-3 text-left text-gray-600">
-                <li class="flex items-start">
-                    <span class="flex-shrink-0 mr-3 text-indigo-500 font-bold">1.</span>
-                    <p>
-                        <span class="font-medium text-gray-800">Create the File:</span> Copy the entire code block above.
-                    </p>
-                </li>
-                <li class="flex items-start">
-                    <span class="flex-shrink-0 mr-3 text-indigo-500 font-bold">2.</span>
-                    <p>
-                        <span class="font-medium text-gray-800">Name it Correctly:</span> In your GitHub repository, upload this file and make sure the name is exactly **`index.html`**.
-                    </p>
-                </li>
-                <li class="flex items-start">
-                    <span class="flex-shrink-0 mr-3 text-indigo-500 font-bold">3.</span>
-                    <p>
-                        <span class="font-medium text-gray-800">Enable Pages:</span> Go to **Settings > Pages** and ensure the **`main`** branch is selected as the source.
-                    </p>
-                </li>
-            </ol>
-        </section>
+            <!-- Plan Editor Card (Initially hidden) -->
+            <div id="plan-editor-card" class="bg-white p-6 rounded-xl shadow-lg border-t-4 border-yellow-500 hidden">
+                <h2 class="text-xl font-bold mb-3 text-gray-700">Edit Plan for Day <span id="editor-day-num"></span></h2>
+                <textarea id="plan-editor-input" rows="5" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-yellow-500 focus:border-yellow-500 resize-none" placeholder="Enter the detailed plan for this day..."></textarea>
+                <div class="flex justify-end space-x-3 mt-4">
+                    <button onclick="togglePlanEditor()" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded-lg transition duration-200">Cancel</button>
+                    <button onclick="savePlanUpdate()" id="save-plan-button" class="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded-lg transition duration-200">
+                        Save Plan Update
+                    </button>
+                </div>
+                <p class="text-xs text-gray-500 mt-3 border-t pt-2">Note: This change updates the **master plan** for Day <span id="editor-day-num-note"></span>, ensuring continuous improvement of the core program.</p>
+            </div>
+            
+            <!-- Today's Progress Card -->
+            <div class="bg-white p-6 rounded-xl shadow-lg border-t-4 border-accent">
+                <h2 class="text-xl font-bold mb-3 text-gray-700">Today's Progress</h2>
+                <div class="flex items-center space-x-4">
+                    <span id="today-progress-percent" class="text-4xl font-extrabold text-accent">0%</span>
+                    <div class="flex-1">
+                        <div id="progress-bar-container" class="w-full progress-bar-bg rounded-full h-3">
+                            <div id="progress-bar" class="h-3 rounded-full transition-all duration-500" style="width: 0%; background-color: #059669;"></div>
+                        </div>
+                        <p id="progress-status" class="text-sm mt-1 font-medium text-gray-500">Log your entry!</p>
+                    </div>
+                </div>
+            </div>
 
-        <!-- Footer / Action Area -->
-        <footer class="mt-6 text-center">
-            <a href="#" id="view-project-btn" onclick="alert('Once deployed, this button would link to your live project details or documentation.')" class="inline-block px-6 py-3 bg-indigo-600 text-white font-semibold rounded-lg shadow-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-50 transition duration-150">
-                View Live Project
-            </a>
-            <p class="text-xs text-gray-400 mt-3">Ready to host on GitHub Pages.</p>
-        </footer>
+            <!-- AI Suggestion Box -->
+            <div class="bg-white p-6 rounded-xl shadow-lg">
+                <h2 class="text-xl font-bold mb-4 text-gray-700">AI Coaching & Suggestions</h2>
+                <textarea id="ai-prompt" rows="2" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-accent focus:border-accent resize-none" placeholder="Ask your coach anything (e.g., 'I feel low energy' or 'How to lose belly fat?')"></textarea>
+                <button onclick="requestAiAdvice()" class="mt-2 w-full bg-accent hover:bg-emerald-700 text-white font-bold py-2 px-4 rounded-lg transition duration-200" id="ai-button">
+                    Get AI Advice
+                </button>
+                <div id="ai-response" class="mt-3 p-3 bg-green-50 text-gray-700 rounded-lg italic text-sm min-h-12 flex items-center border border-green-200">
+                    Your personalized advice will appear here!
+                </div>
+            </div>
+
+        </div>
+        
+        <!-- COLUMN 2: Daily Log Input -->
+        <div class="lg:col-span-2 space-y-6">
+
+            <!-- Daily Log Form -->
+            <div class="bg-white p-6 rounded-xl shadow-xl">
+                <h2 class="text-2xl font-bold mb-4 text-gray-800 border-b pb-2">Daily Check-in (<span id="today-date-log"></span>)</h2>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    
+                    <!-- Habits (Y/N) -->
+                    <div>
+                        <h3 class="font-semibold text-lg mb-3 text-gray-700">Habits Done (Y/N)</h3>
+                        <div class="space-y-3">
+                            <label class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                                <div>
+                                    Morning Routine Done
+                                    <p class="text-xs text-gray-500 italic mt-1">Stretches & Box Breathing (check Today's Focus for specifics)</p>
+                                </div>
+                                <input type="checkbox" id="morning_done" class="h-5 w-5 rounded text-accent focus:ring-accent border-gray-300">
+                            </label>
+                            <label class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                                <div>
+                                    Workout Done
+                                    <p class="text-xs text-gray-500 italic mt-1">Completed resistance/bodyweight session for the day</p>
+                                </div>
+                                <input type="checkbox" id="workout_done" class="h-5 w-5 rounded text-accent focus:ring-accent border-gray-300">
+                            </label>
+                            <label class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                                <div>
+                                    Posture & Breathing Done
+                                    <p class="text-xs text-gray-500 italic mt-1">Breathing drill or posture check *after* the morning routine</p>
+                                </div>
+                                <input type="checkbox" id="breathing_done" class="h-5 w-5 rounded text-accent focus:ring-accent border-gray-300">
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Scores (1-5) -->
+                    <div>
+                        <h3 class="font-semibold text-lg mb-3 text-gray-700">Scores & Notes</h3>
+                        <div class="space-y-3">
+                            
+                            <!-- NEW FOOD LOG INPUT -->
+                            <label class="block">
+                                <span class="text-gray-600 font-medium">Food Log (Tell your coach what you ate)</span>
+                                <textarea id="food_log_description" rows="3" class="mt-1 w-full p-2 border border-gray-300 rounded-lg focus:ring-accent focus:border-accent resize-none" placeholder="e.g., 'Ate chicken and salad for lunch, but had a small serving of cake after dinner.'"></textarea>
+                                <p class="text-xs text-gray-500 mt-1">AI will analyze this and give you a score and suggestions upon saving.</p>
+                            </label>
+
+                            <!-- AI RATING & FEEDBACK -->
+                            <div id="eating_feedback_display" class="p-3 bg-gray-100 rounded-lg border border-gray-200 min-h-12">
+                                <p class="text-sm text-gray-700 font-semibold mb-1">Eating Score: <span id="eating_score_value" class="text-accent font-extrabold">--</span></p>
+                                <p id="eating_suggestions" class="text-xs text-gray-500 italic">Save your entry to get your AI rating and personalized feedback.</p>
+                            </div>
+                            
+                            <!-- HIDDEN INPUT for FireStore/Progress Calc -->
+                            <input type="hidden" id="eating_score" value="0">
+                            
+                            <!-- Original Night Score -->
+                            <label class="block">
+                                <span class="text-gray-600">Night Checklist Score (0-5)</span>
+                                <input type="number" id="night_score" min="0" max="5" class="mt-1 w-full p-2 border border-gray-300 rounded-lg focus:ring-accent focus:border-accent">
+                                <p class="text-xs text-gray-500 mt-1">**5 = Perfect Sleep Hygiene.** Points for: 1. No Screen 1hr before bed, 2. Sleep by Target Time, 3. 8+ hours sleep, 4. No food 3hrs before bed, 5. Evening walk done.</p>
+                            </label>
+                            <label class="block">
+                                <span class="text-gray-600">Actual Results / Observations (General Notes)</span>
+                                <textarea id="observations" rows="2" class="mt-1 w-full p-2 border border-gray-300 rounded-lg focus:ring-accent focus:border-accent resize-none"></textarea>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <button onclick="saveDailyEntry()" class="mt-6 w-full bg-accent hover:bg-emerald-700 text-white font-bold py-3 rounded-xl transition duration-200 text-lg">
+                    Save Today's Entry
+                </button>
+            </div>
+            
+            <!-- Measurements Table (Real-time View) -->
+            <div class="bg-white p-6 rounded-xl shadow-xl">
+                <h2 class="text-2xl font-bold mb-4 text-gray-800 border-b pb-2">Weekly Measurements</h2>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                                <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Weight (kg)</th>
+                                <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Waist (cm)</th>
+                                <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Hips (cm)</th>
+                                <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="measurements-table-body" class="bg-white divide-y divide-gray-200">
+                            <!-- Rows populated by JavaScript -->
+                            <tr><td colspan="5" class="text-center py-4 text-gray-400">Loading weekly targets...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <button onclick="promptForMeasurementLog()" class="mt-4 w-full bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-2 rounded-lg transition duration-200">
+                    Log Current Measurement
+                </button>
+            </div>
+        </div>
     </div>
+</div>
 
+<!-- Modal for Measurement Input -->
+<div id="measurement-modal" class="fixed inset-0 bg-gray-900 bg-opacity-75 hidden items-center justify-center p-4 z-50">
+    <div class="bg-white p-6 rounded-xl shadow-2xl w-full max-w-md">
+        <h2 class="text-xl font-bold mb-4 text-gray-800">Log Weekly Measurement</h2>
+        <div class="space-y-3">
+            <label class="block"><span class="text-gray-600">Weight (kg)</span>
+                <input type="number" id="m_weight" class="mt-1 w-full p-2 border border-gray-300 rounded-lg focus:ring-accent focus:border-accent">
+            </label>
+            <label class="block"><span class="text-gray-600">Waist (cm)</span>
+                <input type="number" id="m_waist" class="mt-1 w-full p-2 border border-gray-300 rounded-lg focus:ring-accent focus:border-accent">
+            </label>
+            <label class="block"><span class="text-gray-600">Hips (cm)</span>
+                <input type="number" id="m_hips" class="mt-1 w-full p-2 border border-gray-300 rounded-lg focus:ring-accent focus:border-accent">
+            </label>
+        </div>
+        <div class="flex justify-end space-x-3 mt-6">
+            <button onclick="closeMeasurementModal()" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded-lg">Cancel</button>
+            <button onclick="saveMeasurementEntry()" class="bg-accent hover:bg-emerald-700 text-white font-bold py-2 px-4 rounded-lg">Save Measurement</button>
+        </div>
+    </div>
+</div>
+
+<script type="module">
+    // --- Firebase Imports ---
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+    import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import { getFirestore, doc, setDoc, onSnapshot, collection, query, where, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+    // Global Firebase/App Variables
+    let app, db, auth, userId = null;
+    let trackerData = {}; // Cache for all 90 days of tracking data
+    let PLAN_DATA = {}; // NEW: Cache for the 90-day progressive plan structure
+    let isEditingPlan = false; // NEW: State to manage the plan editor UI visibility
+    const START_DATE = new Date();
+    START_DATE.setDate(START_DATE.getDate() + 1); // Start date is tomorrow
+    const TOTAL_DAYS = 90;
+    const TRACKER_COLLECTION = 'tracker_data';
+    const MEASUREMENTS_COLLECTION = 'measurements';
+    const PLAN_COLLECTION_PUBLIC = 'fitness_plan'; // Collection for the editable plan
+    const PLAN_DOC_ID = '90_day_plan';
+    
+    // Globals provided by the Canvas environment
+    const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+    const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
+    const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+    const apiKey = ""; // API Key for Gemini is handled by the canvas environment
+
+    // --- Utility Functions ---
+
+    /** Pads a single-digit number with a leading zero (e.g., 9 -> 09) */
+    const pad = (num) => String(num).padStart(2, '0');
+
+    /** Formats a Date object into YYYY-MM-DD string */
+    const formatDate = (date) => `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+
+    /** Returns the start date of the current 7-day week for a given date */
+    function getWeekStartDate(date) {
+        const diff = (date.getDay() + 6) % 7; // Monday is day 0
+        const weekStart = new Date(date);
+        weekStart.setDate(date.getDate() - diff);
+        return new Date(weekStart.getFullYear(), weekStart.getMonth(), weekStart.getDate());
+    }
+
+    /** Returns the sequential day number (1-90) based on the start date */
+    function getDayNumber(currentDate) {
+        const startTimestamp = START_DATE.getTime();
+        const currentTimestamp = currentDate.getTime();
+        
+        // Use a standard day calculation method for robustness
+        const startDay = new Date(START_DATE.getFullYear(), START_DATE.getMonth(), START_DATE.getDate()).getTime();
+        const currentDay = new Date(currentDate.getFullYear(), currentDate.getMonth(), currentDate.getDate()).getTime();
+        
+        const diffDays = Math.floor((currentDay - startDay) / (1000 * 60 * 60 * 24));
+        return diffDays + 1; // +1 to make it 1-indexed
+    }
+
+    /** Returns the week number (1-13) based on the start date */
+    function getWeekNumber(currentDate) {
+        const dayNum = getDayNumber(currentDate);
+        if (dayNum <= 0 || dayNum > TOTAL_DAYS) return 0;
+        return Math.floor((dayNum - 1) / 7) + 1;
+    }
+
+    // --- Data Model Logic (Refactored to use PLAN_DATA) ---
+
+    /** Calculates the daily progress percentage. */
+    function calculateProgress(data) {
+        let progress = 0;
+        // Y/N (20 points each)
+        if (data.morning_done === 'Y') progress += 20;
+        if (data.workout_done === 'Y') progress += 20;
+        if (data.breathing_done === 'Y') progress += 20;
+        
+        // Scores (4 points per score point)
+        // Eating (max 5) * 4 = 20
+        // Night (max 5) * 4 = 20
+        progress += (data.eating_score || 0) * 4;
+        progress += (data.night_score || 0) * 4;
+        
+        return Math.min(progress, 100);
+    }
+
+    // --- Fitness Plan Management ---
+    
+    /** Initial plan structure (moved from generateFocus) */
+    function generateInitialPlan() {
+        const base = "Eating: Protein + Vegetables/Salad (avoid fried/sugary foods). ";
+        let plan = {};
+        for (let i = 0; i < TOTAL_DAYS; i++) {
+            const dayNum = i + 1;
+            const week = Math.floor((dayNum - 1) / 7) + 1;
+            let daily_to_do = "";
+
+            if (week === 1) {
+                daily_to_do = "Morning: Wall Angels 1 min, Chest Stretch 1 min, Box Breathing 3 rounds. Workout: 10 Squats, 10 Incline Push-ups, 30-sec Plank ×2. Evening: 15-min walk, stretch 5 min. " + base;
+            } else if (week >= 2 && week <= 4) {
+                daily_to_do = `W${week} Focus: Morning: Add 30 sec Hip Flexor Stretch. Workout: 12 Squats, 12 Incline Push-ups, 45-sec Plank ×2. Evening: 20-min brisk walk, 5 min stretch. ` + base;
+            } else if (week >= 5 && week <= 8) {
+                daily_to_do = `W${week} Focus: Morning: Add 1 min balance drill. Workout: Introduce 5 Burpees/Set (3 Sets total). Evening: Focus on early sleep (8hrs goal). ` + base;
+            } else if (week >= 9 && week <= 12) {
+                daily_to_do = `W${week} Focus: High Intensity/Consistency. Workout: Max effort on plank (record time). Focus on breath control throughout the day. Prioritize meal prep. ` + base;
+            } else {
+                daily_to_do = "W13 Focus: Review, Active Recovery, and Mobility. Plan your next 90 days! " + base;
+            }
+            plan[`day_${dayNum}`] = daily_to_do;
+        }
+        return plan;
+    }
+
+    /** Seeds the public fitness plan if it doesn't exist. */
+    async function seedFitnessPlan() {
+        const planDocRef = doc(db, 'artifacts', appId, 'public', 'data', PLAN_COLLECTION_PUBLIC, PLAN_DOC_ID);
+        const planDocSnap = await getDoc(planDocRef);
+
+        if (!planDocSnap.exists()) {
+            console.log("Seeding initial 90-day fitness plan into public database...");
+            const initialPlanData = generateInitialPlan();
+            try {
+                // Use a simple day to write the initial plan, the rest of the days will be written in ensureTrackerStructure
+                // This is done to prevent writing 90 documents every time a new user joins.
+                await setDoc(planDocRef, initialPlanData, { merge: true });
+                console.log("Plan seed successful.");
+            } catch (e) {
+                console.error("Error seeding plan:", e);
+            }
+        }
+    }
+
+    /** Loads the fitness plan into the global PLAN_DATA cache. */
+    async function loadFitnessPlan() {
+        const planDocRef = doc(db, 'artifacts', appId, 'public', 'data', PLAN_COLLECTION_PUBLIC, PLAN_DOC_ID);
+        
+        // Use onSnapshot for real-time plan updates
+        onSnapshot(planDocRef, (docSnap) => {
+            if (docSnap.exists()) {
+                PLAN_DATA = docSnap.data();
+                console.log("Fitness plan loaded/updated from cloud configuration.");
+                // Update tracker documents if the plan has changed
+                updateTrackerDocumentsFromPlan(); 
+                updateDashboard(); // Refresh dashboard once plan is loaded
+            } else {
+                console.warn("Fitness plan document does not exist. Plan may be empty.");
+            }
+        }, (error) => console.error("Error loading fitness plan:", error));
+    }
+    
+    /** Updates the user's tracker documents for tomorrow with the latest plan data. */
+    async function updateTrackerDocumentsFromPlan() {
+        if (!userId || Object.keys(PLAN_DATA).length === 0) return;
+
+        const tomorrow = new Date();
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        const tomorrowStr = formatDate(tomorrow);
+        const tomorrowDayNum = getDayNumber(tomorrow);
+        const tomorrowKey = `day_${tomorrowDayNum}`;
+        
+        // Only update if the plan exists for tomorrow
+        if (PLAN_DATA[tomorrowKey]) {
+            const trackerDocRef = doc(db, 'artifacts', appId, 'users', userId, TRACKER_COLLECTION, tomorrowStr);
+            // This setDoc ensures the user's tracker data for tomorrow reflects the master plan
+            // The merge: true is crucial so we don't overwrite user-logged data.
+            await setDoc(trackerDocRef, { daily_to_do: PLAN_DATA[tomorrowKey], day_num: tomorrowDayNum }, { merge: true });
+        }
+    }
+
+
+    // --- Firebase Initialization and Auth ---
+
+    function setupFirebase() {
+        if (!firebaseConfig) {
+            document.getElementById('auth-status').textContent = 'Error: Firebase config not found.';
+            return;
+        }
+        
+        // Removed setLogLevel('debug') to fix SyntaxError
+        app = initializeApp(firebaseConfig);
+        db = getFirestore(app);
+        auth = getAuth(app);
+
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                userId = user.uid;
+                document.getElementById('auth-status').textContent = `User: ${userId.substring(0, 8)}... (Synced)`;
+                
+                // 1. Ensure the public plan exists (for initial setup)
+                await seedFitnessPlan();
+
+                // 2. Load the plan data (and set up real-time listener)
+                await loadFitnessPlan();
+
+                // 3. Set up real-time listeners for user's data
+                setupRealtimeListeners();
+            } else {
+                try {
+                    if (initialAuthToken) {
+                        await signInWithCustomToken(auth, initialAuthToken);
+                    } else {
+                        await signInAnonymously(auth);
+                    }
+                } catch (error) {
+                    console.error("Authentication Error:", error);
+                    document.getElementById('auth-status').textContent = 'Authentication Failed.';
+                }
+            }
+        });
+    }
+
+    // --- Realtime Listeners and Display Updates ---
+
+    function setupRealtimeListeners() {
+        if (!db || !userId) return;
+
+        // 1. Tracker Data Listener
+        const trackerQ = collection(db, 'artifacts', appId, 'users', userId, TRACKER_COLLECTION);
+        onSnapshot(trackerQ, (snapshot) => {
+            snapshot.docs.forEach(doc => {
+                trackerData[doc.id] = doc.data();
+            });
+            updateDashboard();
+            loadDailyLogInputs();
+        }, (error) => console.error("Error reading tracker data:", error));
+
+        // 2. Measurements Listener (unchanged)
+        const measurementsQ = collection(db, 'artifacts', appId, 'users', userId, MEASUREMENTS_COLLECTION);
+        onSnapshot(measurementsQ, (snapshot) => {
+            const tbody = document.getElementById('measurements-table-body');
+            tbody.innerHTML = ''; // Clear existing rows
+            
+            let data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            data.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+            if (data.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" class="text-center py-4 text-gray-400">No measurements logged yet.</td></tr>';
+                return;
+            }
+
+            data.forEach(m => {
+                const row = tbody.insertRow();
+                row.className = 'hover:bg-gray-50';
+                
+                row.insertCell().textContent = m.date;
+                row.insertCell().textContent = m.weight_kg ? `${m.weight_kg} kg` : '-';
+                row.insertCell().textContent = m.waist_cm ? `${m.waist_cm} cm` : '-';
+                row.insertCell().textContent = m.hips_cm ? `${m.hips_cm} cm` : '-';
+
+                const actionCell = row.insertCell();
+                // Ensure editMeasurement is a global function
+                actionCell.innerHTML = `<button onclick="editMeasurement('${m.id}')" class="text-xs text-accent hover:underline">Edit</button>`;
+            });
+        }, (error) => console.error("Error reading measurements:", error));
+    }
+
+    function updateDashboard() {
+        const today = new Date();
+        const todayStr = formatDate(today);
+        const tomorrow = new Date();
+        tomorrow.setDate(today.getDate() + 1);
+        const tomorrowStr = formatDate(tomorrow); // <-- FIX: Defined tomorrowStr
+        const tomorrowDayNum = getDayNumber(tomorrow);
+
+        // --- Tomorrow's Focus ---
+        const tomorrowData = trackerData[tomorrowStr];
+        document.getElementById('tomorrow-date').textContent = `Day ${tomorrowDayNum} (${tomorrow.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })})`;
+        
+        const tomorrowTasksEl = document.getElementById('tomorrow-tasks');
+
+        if (tomorrowData && tomorrowData.daily_to_do) {
+            // Display the task loaded from the user's tracker data (which pulls from the plan)
+            tomorrowTasksEl.textContent = tomorrowData.daily_to_do;
+        } else if (getDayNumber(tomorrow) > TOTAL_DAYS) {
+             tomorrowTasksEl.textContent = "Congratulations! 90 days complete! Review your progress and set new goals.";
+        } else {
+             tomorrowTasksEl.textContent = "Loading cloud configuration...";
+        }
+
+        // --- Today's Progress ---
+        const todayData = trackerData[todayStr];
+        document.getElementById('today-date-log').textContent = today.toLocaleDateString('en-US', { month: 'long', day: 'numeric' });
+
+        const progressPercentEl = document.getElementById('today-progress-percent');
+        const progressBarEl = document.getElementById('progress-bar');
+        const progressStatusEl = document.getElementById('progress-status');
+
+        if (todayData) {
+            const progress = todayData.progress; // 0-100
+            progressPercentEl.textContent = `${progress}%`;
+            progressBarEl.style.width = `${progress}%`;
+            
+            if (progress >= 80) {
+                progressStatusEl.textContent = 'Excellent! You crushed your goals.';
+                progressBarEl.style.backgroundColor = '#10b981'; // Tailwind Green-500
+            } else if (progress >= 60) {
+                progressStatusEl.textContent = 'Good work! Almost there.';
+                progressBarEl.style.backgroundColor = '#f59e0b'; // Tailwind Amber-500
+            } else {
+                progressStatusEl.textContent = 'Needs work. Revisit your tasks.';
+                progressBarEl.style.backgroundColor = '#ef4444'; // Tailwind Red-500
+            }
+        } else {
+            progressPercentEl.textContent = '0%';
+            progressBarEl.style.width = '0%';
+            progressStatusEl.textContent = 'Log your entry!';
+            progressBarEl.style.backgroundColor = '#059669';
+        }
+    }
+    
+    function loadDailyLogInputs() {
+        const todayStr = formatDate(new Date());
+        const data = trackerData[todayStr];
+
+        // Helper function to update eating feedback UI
+        const updateEatingFeedbackUI = (score, feedback) => {
+            document.getElementById('eating_score_value').textContent = score > 0 ? score : '--';
+            document.getElementById('eating_suggestions').textContent = feedback || 'Save your entry to get your AI rating and personalized feedback.';
+        };
+
+        if (data) {
+            document.getElementById('morning_done').checked = data.morning_done === 'Y';
+            document.getElementById('workout_done').checked = data.workout_done === 'Y';
+            document.getElementById('breathing_done').checked = data.breathing_done === 'Y';
+            
+            // Hidden input for score (needed for progress calculation)
+            document.getElementById('eating_score').value = data.eating_score || 0; 
+
+            document.getElementById('night_score').value = data.night_score || '';
+            document.getElementById('observations').value = data.observations || '';
+            
+            // NEW FIELD LOADING
+            document.getElementById('food_log_description').value = data.food_log_description || '';
+            updateEatingFeedbackUI(data.eating_score || 0, data.eating_score_feedback || '');
+
+        } else {
+             // Clear inputs if no data for today or day is out of range
+             document.getElementById('morning_done').checked = false;
+             document.getElementById('workout_done').checked = false;
+             document.getElementById('breathing_done').checked = false;
+             document.getElementById('eating_score').value = 0; // Reset hidden score to 0
+             document.getElementById('night_score').value = '';
+             document.getElementById('observations').value = '';
+             
+             // NEW FIELD CLEARING
+             document.getElementById('food_log_description').value = '';
+             updateEatingFeedbackUI(0, '');
+        }
+    }
+
+    // --- FITNESS PLAN EDITING FUNCTIONS (Exposed to window) ---
+
+    window.togglePlanEditor = function() {
+        const editorCard = document.getElementById('plan-editor-card');
+        isEditingPlan = !isEditingPlan;
+
+        if (isEditingPlan) {
+            // Show the editor and load tomorrow's data
+            const tomorrow = new Date();
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            const tomorrowDayNum = getDayNumber(tomorrow);
+            const tomorrowKey = `day_${tomorrowDayNum}`;
+
+            document.getElementById('editor-day-num').textContent = tomorrowDayNum;
+            document.getElementById('editor-day-num-note').textContent = tomorrowDayNum;
+
+            const currentPlan = PLAN_DATA[tomorrowKey] || "Plan not yet defined. Write the new plan here...";
+            document.getElementById('plan-editor-input').value = currentPlan;
+            
+            editorCard.style.display = 'block';
+        } else {
+            // Hide the editor
+            editorCard.style.display = 'none';
+        }
+    }
+
+    window.savePlanUpdate = async function() {
+        if (!db || !userId) return console.error('App not authenticated. Please wait.');
+
+        const saveButton = document.getElementById('save-plan-button');
+        saveButton.disabled = true;
+        saveButton.textContent = 'Saving...';
+
+        const newPlanText = document.getElementById('plan-editor-input').value.trim();
+        
+        if (!newPlanText) {
+            console.error("Plan cannot be empty.");
+            saveButton.disabled = false;
+            saveButton.textContent = 'Save Plan Update';
+            return;
+        }
+
+        const tomorrow = new Date();
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        const tomorrowStr = formatDate(tomorrow);
+        const tomorrowDayNum = getDayNumber(tomorrow);
+        const tomorrowKey = `day_${tomorrowDayNum}`;
+
+        const planDocRef = doc(db, 'artifacts', appId, 'public', 'data', PLAN_COLLECTION_PUBLIC, PLAN_DOC_ID);
+        
+        try {
+            // 1. Update the master plan document
+            await setDoc(planDocRef, { [tomorrowKey]: newPlanText }, { merge: true });
+
+            // 2. Immediately update the user's personal tracker data for tomorrow with the new plan
+            const trackerDocRef = doc(db, 'artifacts', appId, 'users', userId, TRACKER_COLLECTION, tomorrowStr);
+            await setDoc(trackerDocRef, { daily_to_do: newPlanText }, { merge: true });
+
+            console.log(`Master plan for ${tomorrowKey} and user's tracker updated successfully.`);
+            window.togglePlanEditor(); // Close editor
+            
+        } catch (e) {
+            console.error("Error saving plan update: ", e);
+        } finally {
+            saveButton.disabled = false;
+            saveButton.textContent = 'Save Plan Update';
+        }
+    }
+
+
+    // --- GEMINI AI INTEGRATION (Exposed to window) ---
+
+    async function getEatingAnalysis(foodLogText) {
+        // ... (API call logic remains the same)
+        const systemPrompt = `You are a strict but fair nutrition coach. Your task is to analyze the user's food log description against the goal: 'Protein + Vegetables/Salad (avoid fried/sugary foods)'. You must return a JSON object containing the calculated score (1-5) and specific, constructive feedback/suggestions for the user's next meal.
+        Scoring Rules:
+        5: Perfect adherence, controlled portions, high protein/veg.
+        4: Great adherence, minor slip (e.g., small dessert/carb).
+        3: Acceptable, moderate mistake (e.g., one fried meal, large portion slip).
+        2: Poor choices (e.g., fast food, two or more sugary items).
+        1: Total loss of control/binge, or almost no quality food.
+        The feedback should be concise (max 2 sentences).`;
+
+        const userQuery = "Analyze this food log and give a score and next-time suggestions: " + foodLogText;
+
+        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+
+        const payload = {
+            contents: [{ parts: [{ text: userQuery }] }],
+            generationConfig: {
+                responseMimeType: "application/json",
+                responseSchema: {
+                    type: "OBJECT",
+                    properties: {
+                        "score": { "type": "INTEGER", "description": "The calculated eating score from 1 to 5." },
+                        "feedback": { "type": "STRING", "description": "A concise, constructive suggestion for the user for the next day." }
+                    },
+                    "propertyOrdering": ["score", "feedback"]
+                }
+            }
+        };
+
+        // Exponential backoff retry logic for AI call
+        const maxRetries = 3;
+        let attempt = 0;
+        
+        while (attempt < maxRetries) {
+            try {
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                
+                if (response.status === 429) {
+                    throw new Error('Rate limit exceeded');
+                }
+
+                if (!response.ok) {
+                    throw new Error(`API call failed with status: ${response.status}`);
+                }
+
+                const result = await response.json();
+                const jsonText = result.candidates?.[0]?.content?.parts?.[0]?.text;
+                
+                if (jsonText) {
+                    const parsedJson = JSON.parse(jsonText);
+                    return {
+                        score: Math.max(1, Math.min(5, parsedJson.score || 1)), // Ensure score is 1-5
+                        feedback: parsedJson.feedback || 'Could not generate specific feedback.'
+                    };
+                }
+            } catch (error) {
+                attempt++;
+                console.warn(`Attempt ${attempt} failed: ${error.message}`);
+                
+                if (attempt >= maxRetries) {
+                    console.error("Gemini Eating Analysis Error after all retries:", error);
+                    break;
+                }
+                const delay = Math.pow(2, attempt) * 1000;
+                await new Promise(resolve => setTimeout(resolve, delay));
+            }
+        }
+        return { score: 1, feedback: 'AI analysis failed. Defaulting score to 1. Check console for error.' };
+    }
+
+    // --- DATA SAVING FUNCTIONS (Exposed to window) ---
+
+    window.saveDailyEntry = async function() {
+        if (!db || !userId) return console.error('App not authenticated. Please wait.');
+
+        const today = new Date();
+        const todayStr = formatDate(today);
+        const saveButton = document.querySelector('button[onclick="saveDailyEntry()"]');
+
+        saveButton.disabled = true;
+        saveButton.textContent = 'Analyzing and Saving...';
+
+        const morning_done = document.getElementById('morning_done').checked ? 'Y' : 'N';
+        const workout_done = document.getElementById('workout_done').checked ? 'Y' : 'N';
+        const breathing_done = document.getElementById('breathing_done').checked ? 'Y' : 'N';
+        
+        const raw_night_score = parseInt(document.getElementById('night_score').value) || 0;
+        const night_score = Math.max(0, Math.min(5, raw_night_score));
+        
+        const food_log_description = document.getElementById('food_log_description').value.trim();
+        const observations = document.getElementById('observations').value;
+        
+        let eating_score = 0;
+        let eating_score_feedback = '';
+
+        if (food_log_description) {
+            const analysisResult = await getEatingAnalysis(food_log_description);
+            eating_score = analysisResult.score;
+            eating_score_feedback = analysisResult.feedback;
+        } else {
+             // If no log is entered, default to the lowest score (1) and generic message
+            eating_score = 1; 
+            eating_score_feedback = 'No food log entered today. Remember to log your food for accurate analysis and feedback!';
+        }
+        
+        // Update the hidden input and UI display before saving
+        document.getElementById('eating_score').value = eating_score;
+        document.getElementById('eating_score_value').textContent = eating_score;
+        document.getElementById('eating_suggestions').textContent = eating_score_feedback;
+
+
+        const dataToSave = {
+            morning_done,
+            workout_done,
+            breathing_done,
+            eating_score, // Now the AI-generated score
+            night_score,
+            observations,
+            // NEW FIELDS TO SAVE
+            food_log_description,
+            eating_score_feedback,
+        };
+
+        // Preserve the existing daily_to_do and day_num
+        const existingData = trackerData[todayStr] || {};
+        dataToSave.daily_to_do = existingData.daily_to_do || "Plan not found.";
+        dataToSave.day_num = existingData.day_num || getDayNumber(today);
+
+        // Calculate progress before saving
+        dataToSave.progress = calculateProgress(dataToSave);
+        
+        try {
+            const docRef = doc(db, 'artifacts', appId, 'users', userId, TRACKER_COLLECTION, todayStr);
+            await setDoc(docRef, dataToSave, { merge: true });
+            console.log(`Daily entry saved! Progress: ${dataToSave.progress}%`);
+        } catch (e) {
+            console.error("Error saving document: ", e);
+        } finally {
+            saveButton.disabled = false;
+            saveButton.textContent = 'Save Today\'s Entry';
+        }
+    }
+
+    window.promptForMeasurementLog = function() {
+        // Clear modal inputs
+        document.getElementById('m_weight').value = '';
+        document.getElementById('m_waist').value = '';
+        document.getElementById('m_hips').value = '';
+        document.getElementById('measurement-modal').style.display = 'flex';
+    }
+
+    window.closeMeasurementModal = function() {
+        document.getElementById('measurement-modal').style.display = 'none';
+    }
+
+    window.saveMeasurementEntry = async function() {
+        if (!db || !userId) return console.error('App not authenticated. Please wait.');
+        
+        const todayStr = formatDate(new Date());
+        
+        const weight = parseFloat(document.getElementById('m_weight').value);
+        const waist = parseFloat(document.getElementById('m_waist').value);
+        const hips = parseFloat(document.getElementById('m_hips').value);
+        
+        if (isNaN(weight) || isNaN(waist) || isNaN(hips)) {
+            // Use console log instead of alert for non-disruptive feedback
+            console.error("Please enter valid numbers for all measurements.");
+            return;
+        }
+
+        const dataToSave = {
+            date: todayStr,
+            weight_kg: weight,
+            waist_cm: waist,
+            hips_cm: hips,
+            timestamp: new Date().toISOString(), 
+        };
+
+        try {
+            const docRef = doc(db, 'artifacts', appId, 'users', userId, MEASUREMENTS_COLLECTION, todayStr);
+            await setDoc(docRef, dataToSave, { merge: true });
+            window.closeMeasurementModal();
+            console.log("Measurement saved successfully!");
+        } catch (e) {
+            console.error("Error saving measurement: ", e);
+        }
+    }
+
+    // --- Placeholder for Edit Measurement ---
+    window.editMeasurement = function(id) {
+        // In a real application, you'd fetch the data for 'id', populate the modal, and open it.
+        console.log(`Edit measurement function called for ID: ${id}. Opening the log modal as a placeholder.`);
+        window.promptForMeasurementLog();
+    }
+
+
+    // --- Gemini AI Integration (General Advice) (Exposed to window) ---
+
+    window.requestAiAdvice = async function() {
+        const userPrompt = document.getElementById('ai-prompt').value.trim();
+        const todayStr = formatDate(new Date());
+        const todayData = trackerData[todayStr];
+
+        if (!userPrompt) {
+            document.getElementById('ai-response').textContent = "Please enter a question or keyword for your AI coach.";
+            return;
+        }
+
+        const aiButton = document.getElementById('ai-button');
+        const aiResponse = document.getElementById('ai-response');
+        
+        aiButton.disabled = true;
+        aiResponse.innerHTML = '<span class="shimmer w-full h-8 block rounded-lg"></span>';
+
+        // Contextualize the prompt with today's performance
+        let context = "";
+        if (todayData) {
+            context = `User's latest logged data (Progress: ${todayData.progress}%, Eating: ${todayData.eating_score}/5, Workout Done: ${todayData.workout_done}). `;
+        } else {
+            context = "No tracking data logged for today yet. ";
+        }
+        
+        const systemPrompt = "You are a friendly and encouraging AI fitness coach. Provide concise, actionable, and personalized advice (max 2 sentences) based on the user's performance data or query. Do not use markdown formatting like **bolding** or lists. Avoid using filler phrases like 'Great question,' or 'Based on your data.'";
+        const userQuery = context + "The user asks: " + userPrompt;
+
+        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+
+        const payload = {
+            contents: [{ parts: [{ text: userQuery }] }],
+            tools: [{ "google_search": {} }], // Enable grounding for better advice
+            systemInstruction: {
+                parts: [{ text: systemPrompt }]
+            },
+        };
+
+        // Exponential backoff retry logic
+        const maxRetries = 5;
+        let attempt = 0;
+
+        while (attempt < maxRetries) {
+            try {
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                
+                if (response.status === 429) {
+                    throw new Error('Rate limit exceeded');
+                }
+
+                if (!response.ok) {
+                    throw new Error(`API call failed with status: ${response.status}`);
+                }
+
+                const result = await response.json();
+                const text = result.candidates?.[0]?.content?.parts?.[0]?.text || "Sorry, I couldn't process that request right now. Try again later!";
+                
+                aiResponse.textContent = text;
+                break; // Success, exit loop
+                
+            } catch (error) {
+                attempt++;
+                console.warn(`Attempt ${attempt} failed: ${error.message}`); // Log every attempt failure
+                
+                if (attempt >= maxRetries) {
+                    // Final failure: update UI with error message
+                    console.error("Gemini API Error after all retries. Please check the console for network error details.", error);
+                    aiResponse.textContent = "Error: Could not connect to the AI coach after multiple attempts. This is usually due to a temporary rate limit or network issue. Try again in a minute, and check your browser console for specific errors.";
+                    break;
+                }
+                const delay = Math.pow(2, attempt) * 1000; // Exponential backoff
+                await new Promise(resolve => setTimeout(resolve, delay));
+            }
+        }
+        
+        aiButton.disabled = false;
+    }
+
+    // --- Initial Setup ---
+
+    window.onload = function() {
+        setupFirebase();
+    }
+</script>
 </body>
 </html>
